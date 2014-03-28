@@ -1,32 +1,40 @@
 require 'bundler/setup'
 Bundler.require(:default)
+Dir[File.dirname(__FILE__) + '/lib/*.rb'].each { |file| require file }
+
 require 'time'
+require 'date'
 
 ActiveRecord::Base.establish_connection(YAML::load(File.open('./db/config.yml'))["development"])
 
-Dir[File.dirname(__FILE__) + '/lib/*.rb'].each { |file| require file }
+
 def main_menu
   puts "c - create event"
   puts "e - edit event"
   puts "d - delete event"
-  puts "l - list event"
+  puts "l - list all event"
+  puts "ld - list all events for today"
+  puts "lw - list all events this week"
+  puts "lnw - list all events next week"
+  puts "lm - list all events for the month"
+  puts "lnm - list all events for next month"
   puts "x - exit"
 
   input = nil
   until input == 'x'
     case input = gets.chomp
-      when 'c'
-        create_event
-      when 'e'
-        edit_event
-      when 'd'
-        delete_event
-      when 'l'
-        list_event
-      when 'x'
-        puts 'Good bye'
+      when 'c' then create_event
+      when 'e' then edit_event
+      when 'd' then delete_event
+      when 'l' then list_event
+      when 'ld' then show_all_today
+      when 'lw' then show_all_week
+      when 'lnw' then show_all_next_week
+      when 'lm' then show_all_month
+      when 'lnm' then show_all_next_month
     end
   end
+  puts "Peace!"
 end
 
 def create_event
@@ -72,7 +80,6 @@ end
 def show_event
   Event.all.each_with_index do |event, index|
     if event.start > Time.now
-  #     puts "hi"
       puts "#{index}. #{event.description}"
     elsif Event.all.length == 0
       puts "No events, create one"
@@ -97,7 +104,6 @@ def list_event
   event_selection = gets.chomp.to_i
   chosen_event = Event.all[event_selection]
   event = Event.find(chosen_event.id)
-  # binding.pry
   system "clear"
   puts "----------------------------------------"
   puts "Event description: #{event.description}"
@@ -135,20 +141,19 @@ def edit_end
 end
 
 def show_all_today
-  Event.all.each_with_index do |event, index|
-    if event.start.day == Time.now.day
-      puts "#{index}. #{event.description}"
-    elsif Event.all.length == 0
-      puts "No events for today"
-      main_menu
-    end
+  binding.pry
+  all_events_today = Event.all.where(start.to_date == Date.today)
+  if all_events_today.length > 0
+    all_events_today.each {|event| puts "#{index}. #{event.description}" }
+  else puts "Nothing for today"
   end
 end
 
 def show_all_week
   Event.all.each_with_index do |event, index|
-    if event.start.cweek == Time.now.cweek
-      puts "#{index}. #{event.description}"
+        binding.pry
+    if event.start.to_date.cweek == Date.today.cweek
+      puts "#{index}. #{event.description} - #{event.start.month} - #{event.start.day}"
     elsif Event.all.length == 0
       puts "No events for today"
       main_menu
@@ -157,9 +162,10 @@ def show_all_week
 end
 
 def next_day
+
   Event.all.each_with_index do |event, index|
     if event.start.day == Date.today.next_day
-      puts "#{index}. #{event.description}"
+      puts "#{index}. #{event.description} - #{event.start.month} - #{event.start.day}"
     elsif Event.all.length == 0
       puts "No events for today"
       main_menu
@@ -168,8 +174,25 @@ def next_day
 end
 
 def show_all_month
-
+  Event.all.each_with_index do |event, index|
+    if event.start.month == Date.today.month
+      puts "#{index}. #{event.description} - #{event.start.month} - #{event.start.day}"
+    elsif Event.all.length == 0
+      puts "No events for today"
+      main_menu
+    end
+  end
 end
 
-# main_menu
-show_all_today
+def show_all_next_month
+  Event.all.each_with_index do |event, index|
+    if event.start.month == Date.today.next_month
+      puts "#{index}. #{event.description} - #{event.start.month} - #{event.start.day}"
+    elsif Event.all.length == 0
+      puts "No events for today"
+      main_menu
+    end
+  end
+end
+
+main_menu
